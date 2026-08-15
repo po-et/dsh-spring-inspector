@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22.19.0, 24, 26]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: git diff --exit-code -- lib
+      - run: pnpm pack --pack-destination artifacts
+      - name: Verify packed install
+        shell: bash
+        run: |
+          archive="$(find artifacts -maxdepth 1 -name '*.tgz' -print -quit)"
+          test -n "$archive"
+          tar -tzf "$archive" | grep -q 'package/lib/index.js'
+          tar -tzf "$archive" | grep -q 'package/lib/types/index.d.ts'
+          tar -tzf "$archive" | grep -q 'package/cordis.patch.yml'
+          scratch="$(mktemp -d)"
+          npm install --prefix "$scratch" "$archive"
+          node -e "import(process.argv[1]).then((p) => { if (p.name !== 'spring-inspector') process.exit(1) })" "$scratch/node_modules/dsh-spring-inspector/lib/index.js"
+
+  dsh-rc6-smoke:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:dsh:rc6

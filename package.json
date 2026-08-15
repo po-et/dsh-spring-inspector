@@ -1,0 +1,80 @@
+{
+  "name": "dsh-spring-inspector",
+  "version": "0.1.0",
+  "description": "Local-first, read-only Spring Boot Actuator diagnostics for DeepSeek Harness",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**/*.js",
+    "lib/types/**/*.d.ts",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md",
+    "docs/**/*.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:dsh:rc6": "bash scripts/run-dsh-smoke.sh",
+    "check:dist": "node scripts/check-runtime-imports.mjs && node scripts/smoke-import.mjs",
+    "check": "pnpm typecheck && pnpm test && pnpm build && pnpm check:dist",
+    "prepack": "pnpm build && pnpm check:dist"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "spring-boot",
+    "actuator",
+    "java",
+    "observability"
+  ],
+  "homepage": "https://github.com/po-et/dsh-spring-inspector#readme",
+  "bugs": "https://github.com/po-et/dsh-spring-inspector/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/po-et/dsh-spring-inspector.git"
+  },
+  "author": "po-et",
+  "license": "MIT",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "packageManager": "pnpm@11.7.0",
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/dsh-credentials": "0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": "0.1.0-rc.6",
+    "@types/node": "^26.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,13 @@
+- id: spring-inspector
+  config:
+    targets:
+      - id: smoke
+        actuatorUrl: http://127.0.0.1:18081/actuator
+    timeoutMs: 2000
+    maxResponseBytes: 65536
+    defaultLimit: 10
+    maxLimit: 20
+
+- insert:
+    - id: spring-inspector-smoke-probe
+      name: ./scripts/dsh-smoke-probe.mjs
