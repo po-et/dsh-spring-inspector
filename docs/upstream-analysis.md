@@ -7,7 +7,7 @@ smoke-test target, not a confirmed compatible host.
 Compatibility update, 2026-10-25: the [CI run for plugin commit `7c4812f`](https://github.com/po-et/dsh-spring-inspector/actions/runs/40197520714)
 passed the Node 22.19, 24, and 26 package verification jobs, but the real rc.6
 host failed at startup with `TypeError: hmr.registerConfig is not a function`.
-The five-tool acceptance checks did not run. The diagnostic CLI-resolver
+The five-tool acceptance checks did not complete. The diagnostic CLI-resolver
 inventory reported app-boot `0.1.0-rc.8`, HMR `1.0.20`, loader `1.0.6`, and
 Cordis `4.0.5`. That inventory records file resolution, not the exact source
 identity of the active ESM service provider. It does not establish that a

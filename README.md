@@ -50,7 +50,7 @@ flowchart LR
 > [2026-10-25 CI run](https://github.com/po-et/dsh-spring-inspector/actions/runs/40197520714)
 > for commit `7c4812f`, the isolated DSH `0.1.0-rc.6` smoke failed during host
 > startup with `TypeError: hmr.registerConfig is not a function`. It did not
-> reach the five-tool acceptance checks.
+> complete the five-tool acceptance checks.
 
 The same run passed the Node 22.19, 24, and 26 verification jobs: typecheck,
 unit/integration tests, build, artifact checks, packing, and packed-install
@@ -190,7 +190,7 @@ isolated profile, check peer dependencies, boot the real Loader, execute all
 five Spring tools through `ctx.tools.execute()`, and verify canonical redaction
 plus invalid argument rejection. It prints and retains the temporary profile
 for inspection. The latest run completed installation and peer checks, then
-failed at host startup before the tool acceptance checks; see the
+failed at host startup without completing tool acceptance; see the
 [preview compatibility status](#preview-compatibility-status).
 
 ## License
