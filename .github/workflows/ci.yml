@@ -34,9 +34,11 @@ jobs:
         run: |
           archive="$(find artifacts -maxdepth 1 -name '*.tgz' -print -quit)"
           test -n "$archive"
-          tar -tzf "$archive" | grep -q 'package/lib/index.js'
-          tar -tzf "$archive" | grep -q 'package/lib/types/index.d.ts'
-          tar -tzf "$archive" | grep -q 'package/cordis.patch.yml'
+          listing="$(mktemp)"
+          tar -tzf "$archive" > "$listing"
+          grep -Fxq 'package/lib/index.js' "$listing"
+          grep -Fxq 'package/lib/types/index.d.ts' "$listing"
+          grep -Fxq 'package/cordis.patch.yml' "$listing"
           scratch="$(mktemp -d)"
           npm install --prefix "$scratch" "$archive"
           node -e "import(process.argv[1]).then((p) => { if (p.name !== 'spring-inspector') process.exit(1) })" "$scratch/node_modules/dsh-spring-inspector/lib/index.js"
