@@ -43,15 +43,31 @@ flowchart LR
   E --> F["canonical redacted JSON"]
 ```
 
+## Preview compatibility status
+
+> [!WARNING]
+> **Real DSH host compatibility has not passed verification.** In the
+> [2026-10-25 CI run](https://github.com/po-et/dsh-spring-inspector/actions/runs/40197520714)
+> for commit `7c4812f`, the isolated DSH `0.1.0-rc.6` smoke failed during host
+> startup with `TypeError: hmr.registerConfig is not a function`. It did not
+> reach the five-tool acceptance checks.
+
+The same run passed the Node 22.19, 24, and 26 verification jobs: typecheck,
+unit/integration tests, build, artifact checks, packing, and packed-install
+import checks. Those results cover the plugin and package checks; the real
+DSH host gate remains failing. The installation commands below are for preview
+evaluation while that compatibility issue is unresolved.
+
 ## Install
 
-Requires Node.js `^22.19.0 || >=24.0.0`. The current release is tested with
-DeepSeek Harness `0.1.0-rc.6`.
+Requires Node.js `^22.19.0 || >=24.0.0`. See the
+[preview compatibility status](#preview-compatibility-status) before installing.
 
-Install the pinned GitHub release into a DSH profile:
+The `v0.1.0` tag has not been published. For preview evaluation, pin this public
+source snapshot in a DSH profile:
 
 ```sh
-dsh plugin --profile spring add github:po-et/dsh-spring-inspector#v0.1.0
+dsh plugin --profile spring add github:po-et/dsh-spring-inspector#7c4812fcef3a96b4eafe516eb8bfed2afce4c8ba
 dsh --profile spring --dump-config
 ```
 
@@ -146,7 +162,7 @@ Read the complete [threat model and architecture](docs/architecture.md) and
 the [upstream contribution analysis](docs/upstream-analysis.md), and report
 vulnerabilities according to [SECURITY.md](SECURITY.md).
 
-## Compatibility note
+## SDK contract
 
 DeepSeek Harness is a developer preview. The plugin uses raw JSON-Schema tool
 registration with explicit argument guards and type-only DSH service imports.
@@ -169,10 +185,13 @@ pnpm test:dsh:rc6
 The test suite covers URL/SSRF policy, path containment, raw argument guards,
 real loopback HTTP, redirects, status 503 health, MIME, response caps,
 cancellation, redaction, and Actuator projections.
-The rc.6 smoke command installs the packed tarball into an isolated profile,
-checks peer dependencies, boots the real Loader, executes all five Spring tools
-through `ctx.tools.execute()`, and verifies canonical redaction plus invalid
-argument rejection. It prints and retains the temporary profile for inspection.
+The rc.6 smoke command is designed to install the packed tarball into an
+isolated profile, check peer dependencies, boot the real Loader, execute all
+five Spring tools through `ctx.tools.execute()`, and verify canonical redaction
+plus invalid argument rejection. It prints and retains the temporary profile
+for inspection. The latest run completed installation and peer checks, then
+failed at host startup before the tool acceptance checks; see the
+[preview compatibility status](#preview-compatibility-status).
 
 ## License
 

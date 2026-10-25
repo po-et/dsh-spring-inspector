@@ -34,13 +34,28 @@
 完整说明见 [架构与威胁模型](docs/architecture.md) 和
 [上游源码与贡献分析](docs/upstream-analysis.md)。
 
+## 预览兼容性状态
+
+> [!WARNING]
+> **真实 DSH 宿主兼容性尚未通过验证。** 在提交 `7c4812f` 的
+> [2026-10-25 CI 运行](https://github.com/po-et/dsh-spring-inspector/actions/runs/40197520714)
+> 中，隔离 DSH `0.1.0-rc.6` smoke 在宿主启动阶段报
+> `TypeError: hmr.registerConfig is not a function`，尚未执行五个工具的验收。
+
+同次运行的 Node 22.19、24、26 验证任务均通过，覆盖类型检查、单元/集成
+测试、构建、产物检查、打包及安装后导入。这些结果验证了插件与包的对应
+检查，真实 DSH 宿主门槛仍然失败。以下安装命令用于预览评估；宿主兼容性
+问题仍待解决。
+
 ## 安装
 
-要求 Node.js `^22.19.0 || >=24.0.0`；当前版本已在 DeepSeek Harness
-`0.1.0-rc.6` 上完成验证。
+要求 Node.js `^22.19.0 || >=24.0.0`；安装前请先阅读上面的
+[预览兼容性状态](#预览兼容性状态)。
+
+目前尚未发布 `v0.1.0` 标签。预览评估固定到以下公开源码提交：
 
 ```sh
-dsh plugin --profile spring add github:po-et/dsh-spring-inspector#v0.1.0
+dsh plugin --profile spring add github:po-et/dsh-spring-inspector#7c4812fcef3a96b4eafe516eb8bfed2afce4c8ba
 dsh --profile spring --dump-config
 ```
 
@@ -105,9 +120,11 @@ pnpm test:dsh:rc6
 
 测试覆盖 SSRF/URL 策略、路径约束、raw 参数校验、真实本地 HTTP、重定向、
 503 health、MIME、字节上限、取消、脱敏和 Actuator 结构化投影。
-rc.6 smoke 会把 tarball 安装到隔离 profile，检查 peer，使用真实 Loader
-启动插件，再通过 `ctx.tools.execute()` 调用全部五个 Spring 工具；临时 profile
-会保留并打印路径，便于继续审计。
+rc.6 smoke 的目标是把 tarball 安装到隔离 profile，检查 peer，使用真实
+Loader 启动插件，再通过 `ctx.tools.execute()` 调用全部五个 Spring 工具。
+最近一次运行完成了安装和 peer 检查，随后在宿主启动阶段失败，尚未执行
+工具验收；详见[预览兼容性状态](#预览兼容性状态)。临时 profile 会保留并
+打印路径，便于继续审计。
 
 ## 许可证
 

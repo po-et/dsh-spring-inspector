@@ -107,7 +107,13 @@ absent rather than merely redacted.
 - `lib/` is committed so pinned GitHub installs need no install-time script.
 - `pnpm pack` is checked for the bundle patch, runtime JavaScript, type
   declarations, documentation, and license.
-- A release is tested in an isolated DSH rc.6 profile before tagging.
+- An isolated DSH rc.6 profile smoke checks real-host compatibility separately
+  from the package checks above. The [2026-10-25 run for commit `7c4812f`](https://github.com/po-et/dsh-spring-inspector/actions/runs/40197520714)
+  passed the Node 22.19, 24, and 26 verification jobs, but the real rc.6 host
+  failed at startup with `TypeError: hmr.registerConfig is not a function`,
+  before the five-tool acceptance checks. Real-host compatibility has not
+  passed verification.
 
 DeepSeek Harness remains a developer preview. Any new release candidate is
-treated as a compatibility event, not assumed compatible.
+treated as a compatibility event. The preview installation instructions do not
+establish a working host combination.
