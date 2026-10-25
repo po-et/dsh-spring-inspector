@@ -27,7 +27,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Verify smoke diagnostics
-        run: node --test scripts/dsh-smoke-diagnostics.test.mjs
+        run: node --test scripts/check-dsh-smoke-diagnostics.mjs
       - run: pnpm check
       - run: git diff --exit-code -- lib
       - run: pnpm pack --pack-destination artifacts
