@@ -134,42 +134,14 @@ export class ActuatorClient {
     if (target === undefined) throw new TypeError(`unknown Spring target "${targetId}"`)
     if (signal.aborted) throw new Error(`Spring Actuator request aborted for target "${targetId}"`)
 
-    const headers: Record<string, string> = {
-      accept: 'application/json',
-      'accept-encoding': 'identity',
-    }
-    if (target.authorizationRef !== undefined) {
-      let value: string | undefined
-      try {
-        value = await this.#resolveAuthorization(target.authorizationRef)
-      } catch {
-        throw new Error(`credential reference "${target.authorizationRef}" could not be resolved`)
-      }
-      if (value === undefined || value.length === 0) {
-        throw new Error(`credential reference "${target.authorizationRef}" is not configured`)
-      }
-      if (value.length > 8192 || /[\r\n]/.test(value)) {
-        throw new Error(`credential reference "${target.authorizationRef}" contains an invalid Authorization value`)
-      }
-      try {
-        validateHeaderValue('authorization', value)
-      } catch {
-        throw new Error(`credential reference "${target.authorizationRef}" contains an invalid Authorization value`)
-      }
-      headers.authorization = value
-    }
-    if (signal.aborted) throw new Error(`Spring Actuator request aborted for target "${targetId}"`)
-
-    const url = endpointUrl(target, segments, query)
-    const endpoint = segments.join('/')
-
     return new Promise<ActuatorResponse>((resolve, reject) => {
       let settled = false
       let rejectionScheduled = false
       let timer: NodeJS.Timeout | undefined
       let req: ReturnType<typeof httpRequest> | undefined
       let response: IncomingMessage | undefined
-      let requestClosed = false
+      // No request is open while authorization is pending.
+      let requestClosed = true
       let responseClosed = false
       let terminalError: Error | undefined
       const cleanup = () => {
@@ -205,47 +177,85 @@ export class ActuatorClient {
       }
       const abort = () => terminate(new Error(`Spring Actuator request aborted for target "${targetId}"`))
 
-      try {
-        req = httpRequest(url, {
-          method: 'GET',
-          headers,
-          agent: false,
-        }, (incoming) => {
-          response = incoming
-          responseClosed = incoming.closed
-          incoming.once('close', () => {
-            responseClosed = true
-            maybeFinishTermination()
-          })
-          if (terminalError !== undefined) {
-            incoming.destroy()
-            maybeFinishTermination()
-            return
+      const startRequest = async () => {
+        const headers: Record<string, string> = {
+          accept: 'application/json',
+          'accept-encoding': 'identity',
+        }
+        if (target.authorizationRef !== undefined) {
+          let value: string | undefined
+          try {
+            value = await this.#resolveAuthorization(target.authorizationRef)
+            if (settled || terminalError !== undefined) return
+          } catch {
+            throw new Error(`credential reference "${target.authorizationRef}" could not be resolved`)
           }
-          void readJsonResponse(incoming, this.#maxResponseBytes, endpoint, targetId, new Set(acceptedStatuses))
-            .then(finishResolve, terminate)
+          if (value === undefined || value.length === 0) {
+            throw new Error(`credential reference "${target.authorizationRef}" is not configured`)
+          }
+          if (value.length > 8192 || /[\r\n]/.test(value)) {
+            throw new Error(`credential reference "${target.authorizationRef}" contains an invalid Authorization value`)
+          }
+          try {
+            validateHeaderValue('authorization', value)
+          } catch {
+            throw new Error(`credential reference "${target.authorizationRef}" contains an invalid Authorization value`)
+          }
+          headers.authorization = value
+        }
+        if (settled || terminalError !== undefined) return
+
+        const url = endpointUrl(target, segments, query)
+        const endpoint = segments.join('/')
+
+        try {
+          req = httpRequest(url, {
+            method: 'GET',
+            headers,
+            agent: false,
+          }, (incoming) => {
+            response = incoming
+            responseClosed = incoming.closed
+            incoming.once('close', () => {
+              responseClosed = true
+              maybeFinishTermination()
+            })
+            if (terminalError !== undefined) {
+              incoming.destroy()
+              maybeFinishTermination()
+              return
+            }
+            void readJsonResponse(incoming, this.#maxResponseBytes, endpoint, targetId, new Set(acceptedStatuses))
+              .then(finishResolve, terminate)
+          })
+          requestClosed = false
+        } catch {
+          finishReject(new Error(`Spring Actuator request failed for target "${targetId}"`))
+          return
+        }
+        req.once('close', () => {
+          requestClosed = true
+          maybeFinishTermination()
         })
-      } catch {
-        finishReject(new Error(`Spring Actuator request failed for target "${targetId}"`))
-        return
+        req.once('error', () => {
+          if (terminalError !== undefined) return
+          terminate(new Error(`Spring Actuator request failed for target "${targetId}"`))
+        })
+        try {
+          req.end()
+        } catch {
+          terminate(new Error(`Spring Actuator request failed for target "${targetId}"`))
+        }
       }
-      req.once('close', () => {
-        requestClosed = true
-        maybeFinishTermination()
-      })
+      // The same deadline covers credentials and HTTP.
       timer = setTimeout(() => {
         terminate(new Error(`Spring Actuator request timed out after ${this.#timeoutMs}ms for target "${targetId}"`))
       }, this.#timeoutMs)
       signal.addEventListener('abort', abort, { once: true })
-      req.once('error', () => {
-        if (terminalError !== undefined) return
-        terminate(new Error(`Spring Actuator request failed for target "${targetId}"`))
+      void startRequest().catch((error: unknown) => {
+        if (settled || terminalError !== undefined) return
+        finishReject(error instanceof Error ? error : new Error(`Spring Actuator request failed for target "${targetId}"`))
       })
-      try {
-        req.end()
-      } catch {
-        terminate(new Error(`Spring Actuator request failed for target "${targetId}"`))
-      }
     })
   }
 }
