@@ -26,6 +26,8 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Verify smoke diagnostics
+        run: node --test scripts/dsh-smoke-diagnostics.test.mjs
       - run: pnpm check
       - run: git diff --exit-code -- lib
       - run: pnpm pack --pack-destination artifacts

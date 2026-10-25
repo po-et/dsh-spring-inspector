@@ -1,4 +1,5 @@
 import { createServer } from 'node:http'
+import { collectCliInventory, observeHmr, writeDiagnostic } from './dsh-smoke-diagnostics.mjs'
 
 export const name = 'spring-inspector-smoke-probe'
 export const inject = ['tools']
@@ -27,6 +28,8 @@ async function waitForTools(ctx) {
 
 export function apply(ctx) {
   const deadline = setTimeout(() => exit(1, 'SPRING_INSPECTOR_SMOKE_FAILED: timed out'), 10_000)
+  observeHmr(ctx)
+  writeDiagnostic(collectCliInventory())
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
     if (request.method !== 'GET') {

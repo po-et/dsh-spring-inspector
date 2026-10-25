@@ -15,6 +15,7 @@ DSH_HOME="$smoke_home" npx -y @deepseek-ai/dsh@0.1.0-rc.6 \
 pnpm --dir "$profile_dir" peers check
 mkdir -p "$profile_dir/scripts"
 ln -s "$project_root/scripts/dsh-smoke-probe.mjs" "$profile_dir/scripts/dsh-smoke-probe.mjs"
+ln -s "$project_root/scripts/dsh-smoke-diagnostics.mjs" "$profile_dir/scripts/dsh-smoke-diagnostics.mjs"
 DSH_HOME="$smoke_home" npx -y @deepseek-ai/dsh@0.1.0-rc.6 \
   --profile spring-smoke --patch "$project_root/scripts/dsh-smoke.patch.yml"
 
