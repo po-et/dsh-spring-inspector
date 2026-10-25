@@ -32,7 +32,7 @@ jobs:
       - name: Verify packed install
         shell: bash
         run: |
-          archive="$(find artifacts -maxdepth 1 -name '*.tgz' -print -quit)"
+          archive="$(find "$PWD/artifacts" -maxdepth 1 -name '*.tgz' -print -quit)"
           test -n "$archive"
           listing="$(mktemp)"
           tar -tzf "$archive" > "$listing"
